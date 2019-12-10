@@ -40,6 +40,7 @@ impl Grid {
         coordinates
     }
 
+    // Solve part 1
     pub fn find_monitoring_station(&self) -> (Coordinate, u32) {
         let asteroids_coordinates = self.find_asteroids();
         let detection: Vec<(Coordinate, u32)> = asteroids_coordinates
@@ -49,6 +50,7 @@ impl Grid {
         *detection.iter().max_by(|x, y| x.1.cmp(&y.1)).unwrap()
     }
 
+    // Solve part 2
     pub fn vaporize(&self) {
         let asteroids_coordinates = self.find_asteroids();
         let (coordinates, _) = self.find_monitoring_station();
@@ -84,7 +86,7 @@ fn detect_asteroids(c: &Coordinate, a: &Vec<Coordinate>) -> (Coordinate, u32) {
 fn vaporize(c: &Coordinate, a: &Vec<Coordinate>, old_index: usize) -> (Vec<Coordinate>, usize) {
     let mut c_index = old_index;
     let mut tree: BTreeMap<OrderedFloat<f64>, &Coordinate> = BTreeMap::new();
-    let mut remaining_coordinates: Vec<Coordinate> = Vec::new();
+    let remaining_coordinates: Vec<Coordinate> = Vec::new();
     for oc in a.iter() {
         if oc == c {
             continue;
@@ -98,17 +100,18 @@ fn vaporize(c: &Coordinate, a: &Vec<Coordinate>, old_index: usize) -> (Vec<Coord
     let mut v = Vec::from_iter(tree);
     v.sort_by(|&(a, _), &(b, _)| b.cmp(&a));
     v.reverse();
-    println!("{:?}", v);
     // Find position with first positive value
-    let zero_degree_indice = v
+    let zero_degree_position = v
         .iter()
         .position(|x| x.0 >= OrderedFloat::from(90f64))
         .unwrap();
-    for c in zero_degree_indice..v.len() {
+    // Print each coordinate zero degree (position zero_degree_position) to the end of the vector
+    for c in zero_degree_position..v.len() {
         println!("Asteroid {}: {:?}", c_index, v[c]);
         c_index += 1;
     }
-    for c in 0..zero_degree_indice {
+    // Print each coordinate from -180 degree (position 0 of the vector) to 0 degree
+    for c in 0..zero_degree_position {
         println!("Asteroid {}: {:?}", c_index, v[c]);
         c_index += 1;
     }
