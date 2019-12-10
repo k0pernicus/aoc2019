@@ -21,4 +21,5 @@ fn main() {
         "Found monitoring station at coordinates {:?}: {} asteroids",
         monitoring_station.0, monitoring_station.1
     );
+    g.vaporize();
 }

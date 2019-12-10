@@ -1,6 +1,7 @@
 use ordered_float::OrderedFloat;
 use rayon::prelude::*;
 use std::collections::BTreeMap;
+use std::iter::FromIterator;
 
 pub type Coordinate = (usize, usize);
 
@@ -47,6 +48,20 @@ impl Grid {
             .collect();
         *detection.iter().max_by(|x, y| x.1.cmp(&y.1)).unwrap()
     }
+
+    pub fn vaporize(&self) {
+        let asteroids_coordinates = self.find_asteroids();
+        let (coordinates, _) = self.find_monitoring_station();
+        let mut index = 1;
+        loop {
+            let (remaining_asteroids, c_index) =
+                vaporize(&coordinates, &asteroids_coordinates, index);
+            index = c_index;
+            if remaining_asteroids.len() == 0 {
+                break;
+            }
+        }
+    }
 }
 
 fn detect_asteroids(c: &Coordinate, a: &Vec<Coordinate>) -> (Coordinate, u32) {
@@ -64,4 +79,38 @@ fn detect_asteroids(c: &Coordinate, a: &Vec<Coordinate>) -> (Coordinate, u32) {
         tree.insert(tan, true);
     }
     (*c, tree.keys().len() as u32)
+}
+
+fn vaporize(c: &Coordinate, a: &Vec<Coordinate>, old_index: usize) -> (Vec<Coordinate>, usize) {
+    let mut c_index = old_index;
+    let mut tree: BTreeMap<OrderedFloat<f64>, &Coordinate> = BTreeMap::new();
+    let mut remaining_coordinates: Vec<Coordinate> = Vec::new();
+    for oc in a.iter() {
+        if oc == c {
+            continue;
+        }
+        let dy: f64 = (oc.1 as i64 - c.1 as i64) as f64;
+        let dx: f64 = (oc.0 as i64 - c.0 as i64) as f64;
+        let tan = OrderedFloat::from(dy.atan2(dx).to_degrees() + 180.);
+        // println!("Coordinates {:?}: tan {}", oc, tan);
+        tree.insert(tan, oc);
+    }
+    let mut v = Vec::from_iter(tree);
+    v.sort_by(|&(a, _), &(b, _)| b.cmp(&a));
+    v.reverse();
+    println!("{:?}", v);
+    // Find position with first positive value
+    let zero_degree_indice = v
+        .iter()
+        .position(|x| x.0 >= OrderedFloat::from(90f64))
+        .unwrap();
+    for c in zero_degree_indice..v.len() {
+        println!("Asteroid {}: {:?}", c_index, v[c]);
+        c_index += 1;
+    }
+    for c in 0..zero_degree_indice {
+        println!("Asteroid {}: {:?}", c_index, v[c]);
+        c_index += 1;
+    }
+    (remaining_coordinates, c_index)
 }
